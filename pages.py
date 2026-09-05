@@ -2038,22 +2038,7 @@ async function createAutoAll(){
   }
 }
 
-function openSupportChat(){
-  // تلاش برای باز کردن ویجت Goftino
-  try{
-    if(window.Goftino && typeof window.Goftino.open === 'function'){
-      window.Goftino.open();
-      return;
-    }
-  }catch(e){}
-  // اگر ویجت هنوز لود نشده، اسکریپت را دوباره اضافه می‌کنیم
-  if(!document.getElementById('goftino-script')){
-    var i="Gtx8L4",d=document,g=d.createElement("script"),s="https://www.goftino.com/widget/"+i,l=localStorage.getItem("goftino_"+i);
-    g.id="goftino-script";g.type="text/javascript";g.async=!0;g.src=l?s+"?o="+l:s;
-    d.getElementsByTagName("head")[0].appendChild(g);
-  }
-  toast('در حال باز کردن پشتیبانی...','ok');
-}
+function openSupportChat(){ openSupportPanel && openSupportPanel(); }
 
 document.addEventListener('DOMContentLoaded',async()=>{
   await checkAuth();

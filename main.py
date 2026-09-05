@@ -217,9 +217,11 @@ http_client: httpx.AsyncClient | None = None
 
 PROTOCOLS = (
     "vless-ws",
+    "vless-gaming",
     "xhttp-packet-up",
     "xhttp-stream-up",
     "xhttp-stream-one",
+    "mixed-xhttp",
     "vmess-ws",
     "trojan-ws",
     "shadowsocks",
@@ -234,9 +236,11 @@ PROTOCOLS = (
 
 PROTOCOL_LABELS = {
     "vless-ws": "VLESS WebSocket",
+    "vless-gaming": "VLESS Gaming Lite ⚡",
     "xhttp-packet-up": "XHTTP Packet Up",
     "xhttp-stream-up": "XHTTP Stream Up",
     "xhttp-stream-one": "XHTTP Stream One",
+    "mixed-xhttp": "Mixed XHTTP (همه در یک)",
     "vmess-ws": "VMess WebSocket",
     "trojan-ws": "Trojan WebSocket",
     "shadowsocks": "Shadowsocks",
@@ -273,9 +277,11 @@ DEFAULT_FINGERPRINT = "chrome"
 
 DEFAULT_ALPN_BY_PROTOCOL = {
     "vless-ws": "http/1.1",
+    "vless-gaming": "http/1.1",
     "xhttp-packet-up": "h2,http/1.1",
     "xhttp-stream-up": "h2,http/1.1",
     "xhttp-stream-one": "h2,http/1.1",
+    "mixed-xhttp": "h2,http/1.1",
 }
 
 DEFAULT_PORT = 443
@@ -939,6 +945,33 @@ def generate_vless_link(
     if protocol == "hysteria2": return f"hysteria2://{uuid}@{host}:{port_value}/?sni={quote(host)}&insecure=0#{label}"
     if protocol == "tuic": return f"tuic://{uuid}:{uuid}@{host}:{port_value}?sni={quote(host)}&alpn=h3#{label}"
     if protocol == "wireguard": return f"wireguard://{uuid}@{host}:{port_value}?publicKey={uuid}#{label}"
+    if protocol == "vless-gaming":
+        # فوق‌العاده سبک مخصوص بازی — حداقل پارامتر، بدون fragment سنگین
+        q = {
+            "encryption": "none",
+            "security": "tls",
+            "type": "ws",
+            "host": host,
+            "path": f"/ws/{uuid}",
+            "sni": host,
+            "fp": "chrome",
+            "alpn": "http/1.1",
+        }
+        return "vless://" + uuid + "@" + host + ":" + str(port_value) + "?" + "&".join(f"{k}={quote(str(v), safe=',/')}" for k, v in q.items()) + "#" + label
+    if protocol == "mixed-xhttp":
+        # یک لینک نماینده — در ساب چند حالت XHTTP برمی‌گردد
+        q = {
+            "encryption": "none",
+            "security": "tls",
+            "type": "xhttp",
+            "mode": "stream-one",
+            "host": host,
+            "path": f"/xhttp-siz10/stream-one/{uuid}",
+            "sni": host,
+            "fp": fp,
+            "alpn": "h2,http/1.1",
+        }
+        return "vless://" + uuid + "@" + host + ":" + str(port_value) + "?" + "&".join(f"{k}={quote(str(v), safe=',/')}" for k, v in q.items()) + "#" + label
     if protocol == "highspeed-demo":
         q = {"encryption":"none","security":"tls","type":"xhttp","mode":"stream-up","host":host,"path":f"/xhttp-siz10/stream-up/{uuid}","sni":host,"fp":fp,"alpn":"h2,http/1.1"}
         return "vless://" + uuid + "@" + host + ":" + str(port_value) + "?" + "&".join(f"{k}={quote(str(v), safe=',/')}" for k,v in q.items()) + "#" + label
@@ -3241,7 +3274,7 @@ async def create_auto_all_protocols(
     request: Request,
     _=Depends(require_auth),
 ):
-    """ساخت خودکار یک گروه ساب حرفه‌ای شامل همه پروتکل‌های اصلی در یک ساب"""
+    """ساخت فقط ۱ ساب مخلوط (بدون VLESS) + فقط ۱ کانفیگ در مدیریت (غیرفعال)"""
     try:
         body = await request.json()
     except Exception:
@@ -3259,16 +3292,8 @@ async def create_auto_all_protocols(
     }
     cfg = profiles.get(profile, profiles["balanced"])
 
-    # پروتکل‌های اصلی و پایدار پنل
-    main_protocols = [
-        "vless-ws",
-        "xhttp-packet-up",
-        "xhttp-stream-up",
-        "xhttp-stream-one",
-    ]
-
-    group_name = body.get("name") or f"همه پروتکل‌ها · {datetime.now().strftime('%m/%d %H:%M')}"
-    group_desc = body.get("desc") or "ساخت خودکار حرفه‌ای — شامل تمام پروتکل‌های اصلی در یک ساب واحد"
+    group_name = body.get("name") or f"Mixed XHTTP · {datetime.now().strftime('%m/%d %H:%M')}"
+    group_desc = body.get("desc") or "ساب مخلوط حرفه‌ای — فقط پروتکل‌های XHTTP (بدون VLESS) · یک کانفیگ در مدیریت"
 
     sub_id, sub_record = await create_sub_group(
         name=group_name,
@@ -3276,37 +3301,35 @@ async def create_auto_all_protocols(
         password=str(body.get("password") or "").strip(),
     )
 
-    created_links = []
-    for proto in main_protocols:
-        label = f"{PROTOCOL_LABELS.get(proto, proto)} · Auto"
-        uid, link = await make_link(
-            label=label,
-            limit_bytes=0,
-            expires_at=None,
-            ip_limit=cfg["ip"],
-            speed_limit_bytes=cfg["speed"],
-            connection_limit=cfg["conn"],
-            note=f"Auto-All Protocols | profile={profile} | {proto}",
-            protocol=proto,
-            fingerprint=cfg["fp"],
-            alpn=DEFAULT_ALPN_BY_PROTOCOL.get(proto, "http/1.1"),
-            port=443,
-            fragment=cfg["fragment"],
-            sub_id=sub_id,
-        )
-        link["security_profile"] = profile
-        created_links.append(get_link_info(link, uid, host))
-
-    # اطمینان از ثبت link_ids در گروه
-    async with SUBS_LOCK:
-        if sub_id in SUBS:
-            SUBS[sub_id]["link_ids"] = [l["uuid"] for l in created_links]
+    # فقط ۱ کانفیگ در مدیریت کانفیگ‌ها
+    label = "Mixed XHTTP · All-in-One"
+    uid, link = await make_link(
+        label=label,
+        limit_bytes=0,
+        expires_at=None,
+        ip_limit=cfg["ip"],
+        speed_limit_bytes=cfg["speed"],
+        connection_limit=cfg["conn"],
+        note=f"Mixed-All | بدون VLESS | profile={profile}",
+        protocol="mixed-xhttp",
+        fingerprint=cfg["fp"],
+        alpn="h2,http/1.1",
+        port=443,
+        fragment=cfg["fragment"],
+        sub_id=sub_id,
+    )
+    # دکمه/وضعیت غیرفعال
+    async with LINKS_LOCK:
+        if uid in LINKS:
+            LINKS[uid]["active"] = False
+            LINKS[uid]["security_profile"] = profile
+            link = LINKS[uid]
     await save_state()
 
     sub_url = f"https://{host}/sub-group/{sub_record.get('uuid_key')}"
     log_activity(
         "sub",
-        f"گروه خودکار همه پروتکل‌ها «{group_name}» با {len(created_links)} کانفیگ ساخته شد",
+        f"ساب مخلوط «{group_name}» با ۱ کانفیگ غیرفعال (بدون VLESS) ساخته شد",
         "ok",
     )
 
@@ -3316,10 +3339,11 @@ async def create_auto_all_protocols(
         "name": group_name,
         "sub_url": sub_url,
         "uuid_key": sub_record.get("uuid_key"),
-        "links_count": len(created_links),
-        "links": created_links,
+        "links_count": 1,
+        "links": [get_link_info(link, uid, host)],
         "profile": profile,
-        "message": "گروه ساب حرفه‌ای با همه پروتکل‌ها با موفقیت ساخته شد",
+        "active": False,
+        "message": "۱ ساب مخلوط (بدون VLESS) + ۱ کانفیگ غیرفعال در مدیریت ساخته شد",
     }
 
 
@@ -7406,6 +7430,7 @@ placeholder="اسم کانفیگ"
   </label>
   <select id="manualProtocol" style="width: 100%; background-color: #1f2937; color: #ffffff; padding: 10px 12px; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px; font-size: 0.875rem; outline: none; cursor: pointer;">
     <option value="vless-ws" style="background-color: #1f2937; color: #ffffff;">VLESS WebSocket</option>
+  <option value="vless-gaming" style="background-color: #1f2937; color: #34d399;">VLESS Gaming Lite ⚡ (سبک بازی)</option>
     <option value="xhttp-packet-up" style="background-color: #1f2937; color: #ffffff;">XHTTP Packet Up (پیشنهادی)</option>
     <option value="xhttp-stream-up" style="background-color: #1f2937; color: #ffffff;">XHTTP Stream Up</option>
     <option value="xhttp-stream-one" style="background-color: #1f2937; color: #ffffff;">XHTTP Stream One</option>
@@ -7701,6 +7726,7 @@ class="modal-backdrop"
 
 <select id="autoProtocol" style="width: 100%; background-color: #1f2937; color: #ffffff; padding: 10px 12px; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px; font-size: 0.875rem; outline: none; cursor: pointer;">
   <option value="vless-ws" style="background-color: #1f2937; color: #ffffff;">VLESS WebSocket</option>
+  <option value="vless-gaming" style="background-color: #1f2937; color: #34d399;">VLESS Gaming Lite ⚡ (سبک بازی)</option>
   <option value="xhttp-packet-up" style="background-color: #1f2937; color: #ffffff;">XHTTP Packet Up</option>
   <option value="xhttp-stream-up" style="background-color: #1f2937; color: #ffffff;">XHTTP Stream Up</option>
   <option value="xhttp-stream-one" style="background-color: #1f2937; color: #ffffff;">XHTTP Stream One</option>
@@ -7833,11 +7859,16 @@ line-height:2;
 
 
 
-<div style="margin:16px 0 12px;padding:14px;border-radius:14px;background:linear-gradient(135deg,rgba(139,92,246,.15),rgba(59,130,246,.1));border:1px solid rgba(139,92,246,.3)">
-  <div style="font-size:13px;font-weight:800;color:#e9d5ff;margin-bottom:4px">🚀 ساخت خودکار همه پروتکل‌ها</div>
-  <div style="font-size:11px;color:rgba(255,255,255,.55);line-height:1.7;margin-bottom:12px">یک گروه ساب حرفه‌ای می‌سازد شامل VLESS-WS + سه حالت XHTTP — همه در یک لینک ساب</div>
-  <button class="modal-btn primary" onclick="createAutoAll()" style="width:100%;background:linear-gradient(135deg,#8b5cf6,#6366f1);border:none">
-    ساخت خودکار کامل · همه پروتکل‌ها در یک ساب
+<div style="margin:16px 0 12px;padding:16px;border-radius:16px;background:linear-gradient(145deg,rgba(139,92,246,.18),rgba(59,130,246,.08));border:1px solid rgba(139,92,246,.35);box-shadow:0 8px 24px rgba(0,0,0,.2)">
+  <div style="font-size:13.5px;font-weight:800;color:#e9d5ff;margin-bottom:6px;display:flex;align-items:center;gap:8px">
+    <span style="font-size:18px">◈</span> ساب مخلوط حرفه‌ای
+  </div>
+  <div style="font-size:11px;color:rgba(255,255,255,.55);line-height:1.75;margin-bottom:14px">
+    فقط <b style="color:#c4b5fd">۱ ساب</b> · بدون VLESS · فقط XHTTP مخلوط<br>
+    فقط <b style="color:#fda4af">۱ کانفیگ</b> در مدیریت · وضعیت <b style="color:#fca5a5">غیرفعال</b>
+  </div>
+  <button class="modal-btn primary" onclick="createAutoAll()" style="width:100%;background:linear-gradient(135deg,#7c3aed,#4f46e5);border:none;font-weight:800;padding:12px;border-radius:12px">
+    ساخت ساب مخلوط · ۱ کانفیگ غیرفعال
   </button>
 </div>
 
@@ -8790,7 +8821,7 @@ async function createAuto(){
 async function createAutoAll(){
     const profile = document.getElementById("autoProfile")?.value || "balanced";
     closeAutoModal();
-    showToast("در حال ساخت گروه همه پروتکل‌ها...");
+    showToast("در حال ساخت ساب مخلوط (بدون VLESS · ۱ کانفیگ غیرفعال)...");
     try {
         const result = await api("/api/links/auto-all", {
             method:"POST",
@@ -8803,7 +8834,7 @@ async function createAutoAll(){
         }
         if(result.sub_url){
             await copyText(result.sub_url);
-            showToast("گروه همه پروتکل‌ها ساخته شد · لینک ساب کپی شد ✓");
+            showToast("ساب مخلوط ساخته شد · لینک کپی شد · کانفیگ غیرفعال است ✓");
         } else {
             showToast("گروه همه پروتکل‌ها ساخته شد ✓");
         }
@@ -9442,30 +9473,150 @@ document.addEventListener("keydown", function(event){
 });
 </script>
 
-<!-- پشتیبانی شناور مربعی پایین چپ + Goftino -->
+<!-- پشتیبانی اختصاصی حرفه‌ای — بدون ویجت خارجی -->
 <style>
-.support-fab{position:fixed;bottom:22px;left:22px;z-index:99990;width:56px;height:56px;border-radius:16px;background:linear-gradient(145deg,#3B82F6,#1D4ED8);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 8px 28px rgba(59,130,246,.45);transition:all .25s}
-.support-fab:hover{transform:translateY(-4px) scale(1.05);box-shadow:0 14px 36px rgba(59,130,246,.55)}
-.support-fab .fab-pulse{position:absolute;inset:-4px;border-radius:18px;border:2px solid rgba(59,130,246,.5);animation:fabPulse 2s ease-out infinite;pointer-events:none}
-@keyframes fabPulse{0%{transform:scale(.85);opacity:.8}70%{transform:scale(1.25);opacity:0}100%{opacity:0}}
+.support-fab{
+  position:fixed;bottom:22px;left:22px;z-index:99990;
+  width:58px;height:58px;border-radius:18px;
+  background:linear-gradient(145deg,#2563eb,#1d4ed8);
+  color:#fff;border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 10px 32px rgba(37,99,235,.5),0 0 0 1px rgba(255,255,255,.08);
+  transition:all .28s cubic-bezier(.4,0,.2,1);
+}
+.support-fab:hover{transform:translateY(-5px) scale(1.06);box-shadow:0 16px 40px rgba(37,99,235,.6)}
+.support-fab .fab-pulse{
+  position:absolute;inset:-5px;border-radius:22px;
+  border:2px solid rgba(96,165,250,.55);
+  animation:fabPulse 2.2s ease-out infinite;pointer-events:none
+}
+@keyframes fabPulse{0%{transform:scale(.9);opacity:.75}65%{transform:scale(1.3);opacity:0}100%{opacity:0}}
+.support-panel-bg{
+  position:fixed;inset:0;z-index:99980;
+  background:rgba(0,0,0,.55);backdrop-filter:blur(8px);
+  display:none;align-items:flex-end;justify-content:flex-start;
+  padding:20px;opacity:0;transition:opacity .25s;
+}
+.support-panel-bg.open{display:flex;opacity:1}
+.support-panel{
+  width:100%;max-width:380px;
+  background:linear-gradient(165deg,#0f172a 0%,#1e293b 100%);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:24px 24px 20px 20px;
+  box-shadow:0 24px 64px rgba(0,0,0,.5);
+  overflow:hidden;transform:translateY(30px);transition:transform .3s cubic-bezier(.4,0,.2,1);
+}
+.support-panel-bg.open .support-panel{transform:translateY(0)}
+.support-panel-head{
+  padding:20px 20px 16px;
+  background:linear-gradient(135deg,rgba(37,99,235,.25),rgba(99,102,241,.15));
+  border-bottom:1px solid rgba(255,255,255,.08);
+  display:flex;align-items:center;gap:14px;
+}
+.support-panel-icon{
+  width:48px;height:48px;border-radius:14px;
+  background:linear-gradient(135deg,#3b82f6,#6366f1);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 6px 20px rgba(59,130,246,.4);
+}
+.support-panel-title{font-size:15px;font-weight:800;color:#f1f5f9}
+.support-panel-sub{font-size:11px;color:#94a3b8;margin-top:3px}
+.support-panel-close{
+  margin-right:auto;width:36px;height:36px;border-radius:10px;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
+  color:#94a3b8;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:18px;transition:.2s
+}
+.support-panel-close:hover{background:rgba(255,255,255,.12);color:#fff}
+.support-panel-body{padding:18px 20px 22px}
+.support-tile{
+  display:flex;align-items:center;gap:14px;padding:14px 14px;
+  border-radius:14px;background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.07);margin-bottom:10px;
+  text-decoration:none;color:inherit;transition:all .2s
+}
+.support-tile:hover{background:rgba(59,130,246,.12);border-color:rgba(59,130,246,.3);transform:translateX(-3px)}
+.support-tile-icon{
+  width:42px;height:42px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0
+}
+.support-tile-label{font-size:13px;font-weight:700;color:#e2e8f0}
+.support-tile-val{font-size:11px;color:#64748b;margin-top:2px}
+.support-note{
+  margin-top:14px;padding:12px 14px;border-radius:12px;
+  background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);
+  font-size:11px;color:#6ee7b7;line-height:1.7;text-align:center
+}
+@media(max-width:480px){
+  .support-fab{bottom:16px;left:16px;width:52px;height:52px}
+  .support-panel{max-width:100%;border-radius:20px}
+}
 </style>
-<button class="support-fab" onclick="openSupportChat()" title="پشتیبانی آنلاین" aria-label="پشتیبانی">
+
+<button class="support-fab" onclick="openSupportPanel()" title="پشتیبانی" aria-label="پشتیبانی">
   <span class="fab-pulse"></span>
   <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
 </button>
+
+<div class="support-panel-bg" id="supportPanelBg" onclick="if(event.target===this)closeSupportPanel()">
+  <div class="support-panel" onclick="event.stopPropagation()">
+    <div class="support-panel-head">
+      <div class="support-panel-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+      </div>
+      <div>
+        <div class="support-panel-title">پشتیبانی PX Panel</div>
+        <div class="support-panel-sub">سوال بپرس · راهنمایی بگیر</div>
+      </div>
+      <button class="support-panel-close" onclick="closeSupportPanel()">×</button>
+    </div>
+    <div class="support-panel-body">
+      <a class="support-tile" href="https://t.me/Pixonal" target="_blank" rel="noopener">
+        <div class="support-tile-icon" style="background:rgba(14,165,233,.15);color:#38bdf8">✈</div>
+        <div>
+          <div class="support-tile-label">تلگرام پشتیبانی</div>
+          <div class="support-tile-val">@Pixonal</div>
+        </div>
+      </a>
+      <a class="support-tile" href="https://t.me/logic_sec" target="_blank" rel="noopener">
+        <div class="support-tile-icon" style="background:rgba(59,130,246,.15);color:#60a5fa">◎</div>
+        <div>
+          <div class="support-tile-label">کانال تلگرام</div>
+          <div class="support-tile-val">t.me/logic_sec</div>
+        </div>
+      </a>
+      <a class="support-tile" href="https://www.youtube.com/@LogicSec_YT" target="_blank" rel="noopener">
+        <div class="support-tile-icon" style="background:rgba(239,68,68,.15);color:#f87171">▶</div>
+        <div>
+          <div class="support-tile-label">یوتیوب آموزش‌ها</div>
+          <div class="support-tile-val">@LogicSec_YT</div>
+        </div>
+      </a>
+      <a class="support-tile" href="https://reymit.ir/moditor" target="_blank" rel="noopener">
+        <div class="support-tile-icon" style="background:rgba(236,72,153,.15);color:#f472b6">♥</div>
+        <div>
+          <div class="support-tile-label">حمایت مالی (اختیاری)</div>
+          <div class="support-tile-val">reymit.ir/moditor</div>
+        </div>
+      </a>
+      <div class="support-note">
+        کاملاً اختیاری هستش عشقا ❤️<br>
+        هر سوالی داشتی مستقیم پیام بده
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
-function openSupportChat(){
-  try{
-    if(window.Goftino && typeof window.Goftino.open === 'function'){ window.Goftino.open(); return; }
-  }catch(e){}
-  if(!document.getElementById('goftino-script')){
-    var i="Gtx8L4",d=document,g=d.createElement("script"),s="https://www.goftino.com/widget/"+i,l=localStorage.getItem("goftino_"+i);
-    g.id="goftino-script";g.type="text/javascript";g.async=!0;g.src=l?s+"?o="+l:s;
-    d.getElementsByTagName("head")[0].appendChild(g);
-  }
-  if(typeof showToast==='function') showToast('در حال باز کردن پشتیبانی...');
+function openSupportPanel(){
+  var el=document.getElementById('supportPanelBg');
+  if(el){ el.classList.add('open'); document.body.style.overflow='hidden'; }
 }
-(function(){var i="Gtx8L4",d=document,g=d.createElement("script"),s="https://www.goftino.com/widget/"+i,l=localStorage.getItem("goftino_"+i);g.id="goftino-script";g.type="text/javascript";g.async=!0;g.src=l?s+"?o="+l:s;d.getElementsByTagName("head")[0].appendChild(g);}());
+function closeSupportPanel(){
+  var el=document.getElementById('supportPanelBg');
+  if(el){ el.classList.remove('open'); document.body.style.overflow=''; }
+}
+document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeSupportPanel(); });
 </script>
 
 </body>
