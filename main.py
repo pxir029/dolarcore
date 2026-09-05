@@ -1,5 +1,5 @@
 # ============================================================
-# PXPanel 13.6.1
+# PXPanel 13.7.0
 # Railway Ready
 # ============================================================
 
@@ -2046,6 +2046,69 @@ h1{
     text-decoration:none;
 }
 
+/* Glassmorphism AI Country Box */
+.ai-glass{
+    margin-top:22px;
+    padding:18px 18px 16px;
+    border-radius:18px;
+    background: linear-gradient(145deg, rgba(255,255,255,.12), rgba(255,255,255,.04));
+    border: 1px solid rgba(255,255,255,.14);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    box-shadow: 0 8px 32px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.08);
+}
+.ai-glass-header{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:14px;
+}
+.ai-icon{
+    width:40px;height:40px;border-radius:12px;
+    background:linear-gradient(135deg,#3b82f6,#8b5cf6);
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;flex-shrink:0;
+    box-shadow:0 4px 16px rgba(59,130,246,.4);
+}
+.ai-title{font-size:13.5px;font-weight:800;color:#fff}
+.ai-sub{font-size:10.5px;color:rgba(255,255,255,.5);margin-top:2px}
+.ai-select-wrap{margin-bottom:10px}
+.ai-select-wrap label{
+    display:block;font-size:10.5px;color:rgba(255,255,255,.55);
+    margin-bottom:6px;font-weight:600;
+}
+.ai-select{
+    width:100%;
+    appearance:none;
+    -webkit-appearance:none;
+    background:rgba(0,0,0,.28);
+    border:1px solid rgba(255,255,255,.12);
+    border-radius:12px;
+    padding:12px 14px;
+    color:#fff;
+    font-family:inherit;
+    font-size:13px;
+    font-weight:600;
+    outline:none;
+    cursor:pointer;
+    transition:.2s;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2360a5fa'%3E%3Cpath d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;
+    background-position:left 14px center;
+    padding-left:32px;
+}
+.ai-select:hover,.ai-select:focus{
+    border-color:rgba(96,165,250,.45);
+    background-color:rgba(0,0,0,.38);
+}
+.ai-select option{background:#0f172a;color:#fff}
+.ai-note{
+    font-size:10.5px;
+    color:rgba(255,255,255,.45);
+    line-height:1.6;
+}
+.ai-note strong{color:#86efac}
+
 @media(max-width:600px){
     .card{
         padding:24px;
@@ -2083,7 +2146,7 @@ PX Panel
 </div>
 
 <div class="version">
-13.6.1
+13.7.0
 </div>
 </div>
 
@@ -2091,6 +2154,33 @@ PX Panel
 
 <div class="status">
 ● سیستم آنلاین و فعال است
+</div>
+
+<!-- AI Country Glass Card -->
+<div class="ai-glass">
+  <div class="ai-glass-header">
+    <div class="ai-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 0 1 4 4v1h1a3 3 0 0 1 0 6h-1v1a4 4 0 0 1-8 0v-1H7a3 3 0 0 1 0-6h1V6a4 4 0 0 1 4-4z"/><circle cx="9" cy="10" r="1"/><circle cx="15" cy="10" r="1"/></svg>
+    </div>
+    <div>
+      <div class="ai-title">هوش مصنوعی · انتخاب کشور</div>
+      <div class="ai-sub">برای بهینه‌سازی کانفیگ و مسیر</div>
+    </div>
+  </div>
+  <div class="ai-select-wrap">
+    <label for="ai-country">کشور سرور / مسیر AI</label>
+    <select id="ai-country" class="ai-select">
+      <option value="US" selected>🇺🇸 آمریکا · United States</option>
+      <option value="DE">🇩🇪 آلمان · Germany</option>
+      <option value="NL">🇳🇱 هلند · Netherlands</option>
+      <option value="GB">🇬🇧 انگلیس · United Kingdom</option>
+      <option value="FR">🇫🇷 فرانسه · France</option>
+      <option value="TR">🇹🇷 ترکیه · Turkey</option>
+      <option value="SG">🇸🇬 سنگاپور · Singapore</option>
+      <option value="JP">🇯🇵 ژاپن · Japan</option>
+    </select>
+  </div>
+  <div class="ai-note">پیش‌فرض روی <strong>آمریکا</strong> تنظیم شده — بهترین سازگاری</div>
 </div>
 
 <h1>
@@ -2131,7 +2221,7 @@ class="btn secondary"
 <div class="footer">
 
 <span>
-PX Panel · 13.6.1
+PX Panel · 13.7.0
 </span>
 
 <a
@@ -2401,7 +2491,7 @@ P
 </h1>
 
 <div class="version">
-13.6.1
+13.7.0
 </div>
 
 <div class="desc">
@@ -5086,7 +5176,7 @@ PX Panel
 </h1>
 
 <div class="version">
-13.6.1
+13.7.0
 </div>
 
 <div class="text">
@@ -6081,7 +6171,7 @@ content="width=device-width,initial-scale=1"
 />
 
 <title>
-PX Panel 13.6.1
+PX Panel 13.7.0
 </title>
 
 <link
@@ -6892,7 +6982,7 @@ PX Panel
 <div class="brand-desc">
 داشبورد مدیریت سرویس
 </div>
-<div class="brand-version">13.6.1</div>
+<div class="brand-version">13.7.0</div>
 <div style="margin-top:5px;font-size:10px;display:flex;align-items:center;gap:6px">
 <svg width="14" height="14" viewBox="0 0 24 24" fill="#ff0000"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31.5 31.5 0 0 0 0 12a31.5 31.5 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31.5 31.5 0 0 0 24 12a31.5 31.5 0 0 0-.5-5.8zM9.75 15.5v-7l6.5 3.5-6.5 3.5z"/></svg>
 <a href="https://www.youtube.com/@LogicSec_YT" target="_blank" rel="noopener" style="color:#93c5fd;text-decoration:none">LogicSec_YT</a>
@@ -6910,9 +7000,12 @@ PX Panel
 <button class="top-btn" onclick="openManualModal()" title="ساخت دستی" style="min-width:44px">
 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 5v14M5 12h14"/></svg>
 </button>
-<button class="top-btn" onclick="openCategoryModal()" title="دسته‌بندی" style="min-width:44px">
+<button class="top-btn" onclick="openCategoryModal()" title="دسته‌بندی" style="min-width:44px;background:rgba(139,92,246,.15);border-color:rgba(139,92,246,.35);color:#c4b5fd">
 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 6h16M4 12h10M4 18h14"/></svg>
 </button>
+<a href="https://reymit.ir/moditor" target="_blank" rel="noopener" class="top-btn" title="حمایت مالی - کاملا اختیاری" style="min-width:44px;background:linear-gradient(135deg,rgba(236,72,153,.25),rgba(244,63,94,.2));border-color:rgba(244,63,94,.4);color:#fda4af;text-decoration:none">
+<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+</a>
 <button class="top-btn" onclick="openMixModal()" title="مخلوط‌سازی کانفیگ‌ها" style="min-width:44px;background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.35);color:#fca5a5">
 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
 </button>
@@ -7740,37 +7833,19 @@ line-height:2;
 
 
 
+<div style="margin:16px 0 12px;padding:14px;border-radius:14px;background:linear-gradient(135deg,rgba(139,92,246,.15),rgba(59,130,246,.1));border:1px solid rgba(139,92,246,.3)">
+  <div style="font-size:13px;font-weight:800;color:#e9d5ff;margin-bottom:4px">🚀 ساخت خودکار همه پروتکل‌ها</div>
+  <div style="font-size:11px;color:rgba(255,255,255,.55);line-height:1.7;margin-bottom:12px">یک گروه ساب حرفه‌ای می‌سازد شامل VLESS-WS + سه حالت XHTTP — همه در یک لینک ساب</div>
+  <button class="modal-btn primary" onclick="createAutoAll()" style="width:100%;background:linear-gradient(135deg,#8b5cf6,#6366f1);border:none">
+    ساخت خودکار کامل · همه پروتکل‌ها در یک ساب
+  </button>
+</div>
+
 <div class="modal-actions">
 
+<button class="modal-btn secondary" onclick="closeAutoModal()">لغو</button>
 
-
-<button
-
-class="modal-btn secondary"
-
-onclick="closeAutoModal()"
-
->
-
-لغو
-
-</button>
-
-
-
-<button
-
-class="modal-btn primary"
-
-onclick="createAuto()"
-
->
-
-ساخت
-
-</button>
-
-
+<button class="modal-btn primary" onclick="createAuto()">ساخت تکی</button>
 
 </div>
 
@@ -8712,6 +8787,32 @@ async function createAuto(){
     await refresh();
 }
 
+async function createAutoAll(){
+    const profile = document.getElementById("autoProfile")?.value || "balanced";
+    closeAutoModal();
+    showToast("در حال ساخت گروه همه پروتکل‌ها...");
+    try {
+        const result = await api("/api/links/auto-all", {
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({profile: profile})
+        });
+        if(!result || !result.ok){
+            showToast("خطا در ساخت خودکار");
+            return;
+        }
+        if(result.sub_url){
+            await copyText(result.sub_url);
+            showToast("گروه همه پروتکل‌ها ساخته شد · لینک ساب کپی شد ✓");
+        } else {
+            showToast("گروه همه پروتکل‌ها ساخته شد ✓");
+        }
+        await refresh();
+    } catch(e) {
+        showToast("خطا: " + (e.message || e));
+    }
+}
+
 
 async function createManual(){
 
@@ -9339,6 +9440,32 @@ function closeRegionNotice(){
 document.addEventListener("keydown", function(event){
     if (event.key === "Escape") closeRegionNotice();
 });
+</script>
+
+<!-- پشتیبانی شناور مربعی پایین چپ + Goftino -->
+<style>
+.support-fab{position:fixed;bottom:22px;left:22px;z-index:99990;width:56px;height:56px;border-radius:16px;background:linear-gradient(145deg,#3B82F6,#1D4ED8);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 8px 28px rgba(59,130,246,.45);transition:all .25s}
+.support-fab:hover{transform:translateY(-4px) scale(1.05);box-shadow:0 14px 36px rgba(59,130,246,.55)}
+.support-fab .fab-pulse{position:absolute;inset:-4px;border-radius:18px;border:2px solid rgba(59,130,246,.5);animation:fabPulse 2s ease-out infinite;pointer-events:none}
+@keyframes fabPulse{0%{transform:scale(.85);opacity:.8}70%{transform:scale(1.25);opacity:0}100%{opacity:0}}
+</style>
+<button class="support-fab" onclick="openSupportChat()" title="پشتیبانی آنلاین" aria-label="پشتیبانی">
+  <span class="fab-pulse"></span>
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+</button>
+<script>
+function openSupportChat(){
+  try{
+    if(window.Goftino && typeof window.Goftino.open === 'function'){ window.Goftino.open(); return; }
+  }catch(e){}
+  if(!document.getElementById('goftino-script')){
+    var i="Gtx8L4",d=document,g=d.createElement("script"),s="https://www.goftino.com/widget/"+i,l=localStorage.getItem("goftino_"+i);
+    g.id="goftino-script";g.type="text/javascript";g.async=!0;g.src=l?s+"?o="+l:s;
+    d.getElementsByTagName("head")[0].appendChild(g);
+  }
+  if(typeof showToast==='function') showToast('در حال باز کردن پشتیبانی...');
+}
+(function(){var i="Gtx8L4",d=document,g=d.createElement("script"),s="https://www.goftino.com/widget/"+i,l=localStorage.getItem("goftino_"+i);g.id="goftino-script";g.type="text/javascript";g.async=!0;g.src=l?s+"?o="+l:s;d.getElementsByTagName("head")[0].appendChild(g);}());
 </script>
 
 </body>
