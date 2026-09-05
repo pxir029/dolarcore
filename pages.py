@@ -671,51 +671,6 @@ a{color:inherit;text-decoration:none}
 .etime{color:var(--t3);font-size:9.5px;margin-bottom:3px;display:flex;align-items:center;gap:4px}
 .emsg{color:var(--red-t);font-family:ui-monospace,monospace;background:var(--red-bg);padding:6px 9px;border-radius:6px;word-break:break-all;font-size:10.5px}
 
-/* ══════ حمایت مالی + پشتیبانی شناور ══════ */
-.donate-btn{display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#ec4899,#f43f5e,#fb7185);color:#fff;border-radius:12px;padding:11px 14px;font-size:12.5px;font-weight:700;font-family:inherit;border:none;cursor:pointer;width:100%;transition:all .2s;box-shadow:0 4px 18px rgba(236,72,153,.35);margin-bottom:10px;text-decoration:none}
-.donate-btn:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(236,72,153,.5);filter:brightness(1.08)}
-.donate-btn i{font-size:18px;animation:heartBeat 1.4s ease-in-out infinite}
-@keyframes heartBeat{0%,100%{transform:scale(1)}15%{transform:scale(1.25)}30%{transform:scale(1)}45%{transform:scale(1.15)}60%{transform:scale(1)}}
-.donate-note{font-size:10px;color:var(--t3);text-align:center;margin-bottom:12px;line-height:1.5;opacity:.9}
-
-.support-fab{position:fixed;bottom:22px;left:22px;z-index:9990;width:56px;height:56px;border-radius:16px;background:linear-gradient(145deg,#3B82F6,#1D4ED8);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 8px 28px rgba(59,130,246,.45),0 0 0 0 rgba(59,130,246,.4);transition:all .25s cubic-bezier(.4,0,.2,1);overflow:hidden}
-.support-fab::before{content:'';position:absolute;inset:0;background:linear-gradient(145deg,rgba(255,255,255,.2),transparent);opacity:0;transition:.2s}
-.support-fab:hover{transform:translateY(-4px) scale(1.05);box-shadow:0 14px 36px rgba(59,130,246,.55)}
-.support-fab:hover::before{opacity:1}
-.support-fab:active{transform:scale(.96)}
-.support-fab .fab-pulse{position:absolute;inset:-4px;border-radius:18px;border:2px solid rgba(59,130,246,.5);animation:fabPulse 2s ease-out infinite;pointer-events:none}
-@keyframes fabPulse{0%{transform:scale(.85);opacity:.8}70%{transform:scale(1.25);opacity:0}100%{opacity:0}}
-.support-fab-tooltip{position:absolute;bottom:100%;left:50%;transform:translateX(-50%) translateY(-8px);background:var(--card);color:var(--t1);font-size:11px;font-weight:600;padding:6px 12px;border-radius:8px;white-space:nowrap;opacity:0;pointer-events:none;transition:.2s;border:1px solid var(--card-b);box-shadow:var(--shadow)}
-.support-fab:hover .support-fab-tooltip{opacity:1;transform:translateX(-50%) translateY(-12px)}
-
-.proto-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-@media(max-width:900px){.proto-cards{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:500px){.proto-cards{grid-template-columns:1fr}}
-.proto-card{border:1.5px solid var(--card-b);border-radius:14px;padding:14px 10px;cursor:pointer;transition:all .2s;text-align:center;position:relative;background:rgba(0,0,0,.12);overflow:hidden}
-.proto-card::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(59,130,246,.08),transparent);opacity:0;transition:.2s}
-.proto-card:hover{border-color:var(--card-bh);transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.2)}
-.proto-card:hover::after{opacity:1}
-.proto-card.active{border-color:var(--accent);background:var(--accent-d);box-shadow:0 0 0 3px rgba(59,130,246,.15)}
-.proto-card.active .proto-card-check{opacity:1;transform:scale(1)}
-.proto-card-check{position:absolute;top:8px;left:8px;width:18px;height:18px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;opacity:0;transform:scale(.5);transition:.18s;z-index:2}
-.proto-card-icon{width:36px;height:36px;border-radius:11px;background:var(--accent-d);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:18px;margin:0 auto 9px;transition:.2s}
-.proto-card.active .proto-card-icon{background:var(--accent);color:#fff;box-shadow:0 4px 12px rgba(59,130,246,.35)}
-.proto-card-title{font-size:11.5px;font-weight:800;color:var(--t1)}
-.proto-card-desc{font-size:9.5px;color:var(--t3);margin-top:3px;line-height:1.45}
-
-.auto-all-panel{background:linear-gradient(135deg,rgba(139,92,246,.12),rgba(59,130,246,.1));border:1.5px solid rgba(139,92,246,.25);border-radius:16px;padding:16px 18px;margin-bottom:18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-.auto-all-icon{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#8B5CF6,#3B82F6);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;box-shadow:0 6px 18px rgba(139,92,246,.35)}
-.auto-all-text{flex:1;min-width:180px}
-.auto-all-title{font-size:14px;font-weight:800;color:var(--t1);margin-bottom:3px}
-.auto-all-sub{font-size:11px;color:var(--t3);line-height:1.5}
-.auto-all-btn{background:linear-gradient(135deg,#8B5CF6,#6366F1);color:#fff;border:none;border-radius:12px;padding:12px 20px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .2s;box-shadow:0 4px 16px rgba(139,92,246,.35);white-space:nowrap}
-.auto-all-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(139,92,246,.5)}
-.auto-all-btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
-
-.nav-it{border-radius:10px;margin:2px 8px;padding:10px 14px}
-.nav-it.on{box-shadow:0 0 0 1px rgba(59,130,246,.2)}
-.nav-sec{padding:16px 16px 6px;letter-spacing:.12em}
-
 @media(max-width:1050px){
   .sidebar{transform:translateX(100%)}
   .sidebar.open{transform:translateX(0);box-shadow:-10px 0 40px rgba(0,0,0,.4)}
@@ -729,7 +684,6 @@ a{color:inherit;text-decoration:none}
   .metrics{grid-template-columns:1fr}
   .main{padding:62px 12px 50px}
   .sub-grid,.cfg-grid,.conn-grid{grid-template-columns:1fr}
-  .support-fab{bottom:16px;left:16px;width:50px;height:50px;font-size:22px}
 }
 </style>
 </head>
@@ -873,11 +827,8 @@ a{color:inherit;text-decoration:none}
     <div class="nav-it" data-pg="support"><i class="ti ti-headset"></i> پشتیبانی</div>
   </div>
   <div class="sb-foot">
-    <a class="donate-btn" href="https://reymit.ir/moditor" target="_blank" rel="noopener">
-      <i class="ti ti-heart-filled"></i> حمایت مالی
-    </a>
-    <div class="donate-note">کاملاً اختیاری هستش عشقا ❤️</div>
     <button class="theme-btn" onclick="toggleTheme()"><i class="ti ti-moon" id="theme-icon"></i> <span id="theme-label">تم روشن</span></button>
+    
     <button class="logout-btn" id="logout-btn"><i class="ti ti-logout"></i> خروج</button>
   </div>
 </aside>
@@ -944,16 +895,6 @@ a{color:inherit;text-decoration:none}
     <div><div class="tb-title"><i class="ti ti-link-plus"></i> کانفیگ‌ها</div><div class="tb-sub">ساخت و مدیریت کانفیگ با سهمیه، انقضا و گروه‌بندی</div></div>
     <div class="tb-right"><span class="badge bg-blue" id="links-pg-cnt">۰ کانفیگ</span></div>
   </div>
-  <div class="auto-all-panel">
-    <div class="auto-all-icon"><i class="ti ti-rocket"></i></div>
-    <div class="auto-all-text">
-      <div class="auto-all-title">ساخت خودکار همه پروتکل‌ها</div>
-      <div class="auto-all-sub">یک گروه ساب حرفه‌ای می‌سازد که شامل VLESS-WS + هر سه حالت XHTTP است — همه در یک لینک ساب واحد</div>
-    </div>
-    <button class="auto-all-btn" id="btn-auto-all" onclick="createAutoAll()">
-      <i class="ti ti-bolt"></i> ساخت خودکار کامل
-    </button>
-  </div>
   <div class="create-panel">
     <div class="cp-head">
       <div class="cp-head-icon"><i class="ti ti-square-rounded-plus"></i></div>
@@ -1006,7 +947,6 @@ a{color:inherit;text-decoration:none}
           <option value="vless-ws">VLESS / WebSocket</option>
           <option value="xhttp-packet-up">XHTTP Ultra · packet-up</option>
           <option value="xhttp-stream-up">XHTTP Ultra · stream-up</option>
-          <option value="xhttp-stream-one">XHTTP Ultra · stream-one</option>
         </select>
         <div class="proto-cards">
           <div class="proto-card active" data-val="vless-ws" onclick="selectProto('vless-ws',this)">
@@ -1018,20 +958,14 @@ a{color:inherit;text-decoration:none}
           <div class="proto-card" data-val="xhttp-packet-up" onclick="selectProto('xhttp-packet-up',this)">
             <div class="proto-card-check"><i class="ti ti-check"></i></div>
             <div class="proto-card-icon"><i class="ti ti-bolt"></i></div>
-            <div class="proto-card-title">XHTTP · packet</div>
+            <div class="proto-card-title">XHTTP · packet-up</div>
             <div class="proto-card-desc">سازگار با CDN</div>
           </div>
           <div class="proto-card" data-val="xhttp-stream-up" onclick="selectProto('xhttp-stream-up',this)">
             <div class="proto-card-check"><i class="ti ti-check"></i></div>
             <div class="proto-card-icon"><i class="ti ti-rocket"></i></div>
-            <div class="proto-card-title">XHTTP · stream</div>
+            <div class="proto-card-title">XHTTP · stream-up</div>
             <div class="proto-card-desc">تاخیر پایین‌تر</div>
-          </div>
-          <div class="proto-card" data-val="xhttp-stream-one" onclick="selectProto('xhttp-stream-one',this)">
-            <div class="proto-card-check"><i class="ti ti-check"></i></div>
-            <div class="proto-card-icon"><i class="ti ti-flame"></i></div>
-            <div class="proto-card-title">XHTTP · ULTRA</div>
-            <div class="proto-card-desc">حداکثر سرعت</div>
           </div>
         </div>
       </div>
@@ -2010,36 +1944,6 @@ function wsLog(c,m){const l=document.getElementById('ws-log'),p=document.createE
 function wsConn(){const u=document.getElementById('ws-uuid').value.trim();if(!u){toast('UUID را وارد کنید','err');return}const url=(location.protocol==='https:'?'wss':'ws')+'://'+location.host+'/ws/'+u;wsLog('info','اتصال: '+url);ws=new WebSocket(url);ws.onopen=()=>wsLog('ok','✓ متصل - UUID معتبر');ws.onerror=()=>wsLog('err','✗ خطا - UUID نامعتبر یا غیرفعال');ws.onmessage=m=>wsLog('info','دریافت '+(m.data.size||m.data.length)+' byte');ws.onclose=e=>wsLog('err','قطع ('+e.code+')'+(e.code===1008?' - دسترسی رد شد':''))}
 function wsSend(){const m=document.getElementById('ws-msg').value;if(!m||!ws||ws.readyState!==1)return;ws.send(m);wsLog('sent','ارسال: '+m);document.getElementById('ws-msg').value=''}
 function wsDisc(){if(ws)ws.close()}
-async function createAutoAll(){
-  const btn=document.getElementById('btn-auto-all');
-  if(!btn)return;
-  btn.disabled=true;
-  btn.innerHTML='<i class="ti ti-loader-2" style="animation:spin 1s linear infinite"></i> در حال ساخت...';
-  try{
-    const r=await authF('/api/links/auto-all',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({profile:'balanced'})});
-    const d=await r.json();
-    if(!r.ok||!d.ok)throw new Error(d.detail||d.message||'خطا');
-    toast('گروه همه پروتکل‌ها ساخته شد ✓','ok');
-    loadLinks();loadSubs();
-    if(d.sub_url){
-      setTimeout(()=>{
-        if(confirm('گروه ساخته شد! لینک ساب را کپی کنم؟\n'+d.sub_url)){
-          navigator.clipboard.writeText(d.sub_url).then(()=>toast('لینک ساب کپی شد','ok'));
-        }
-      },300);
-    }
-    navTo('subgroups');
-  }catch(e){
-    console.error(e);
-    toast('خطا در ساخت خودکار: '+(e.message||e),'err');
-  }finally{
-    btn.disabled=false;
-    btn.innerHTML='<i class="ti ti-bolt"></i> ساخت خودکار کامل';
-  }
-}
-
-function openSupportChat(){ openSupportPanel && openSupportPanel(); }
-
 document.addEventListener('DOMContentLoaded',async()=>{
   await checkAuth();
   initCharts();
@@ -2054,19 +1958,8 @@ document.addEventListener('DOMContentLoaded',async()=>{
     if(document.getElementById('pg-connections').classList.contains('on'))loadConns();
     if(document.getElementById('pg-logs').classList.contains('on'))loadActivity();
   },5000);
-
-  // لود ویجت پشتیبانی Goftino
-  (function(){var i="Gtx8L4",d=document,g=d.createElement("script"),s="https://www.goftino.com/widget/"+i,l=localStorage.getItem("goftino_"+i);g.id="goftino-script";g.type="text/javascript";g.async=!0;g.src=l?s+"?o="+l:s;d.getElementsByTagName("head")[0].appendChild(g);}());
 });
 </script>
-
-<!-- دکمه پشتیبانی شناور مربعی پایین چپ -->
-<button class="support-fab" onclick="openSupportChat()" title="پشتیبانی آنلاین" aria-label="پشتیبانی">
-  <span class="fab-pulse"></span>
-  <i class="ti ti-headset"></i>
-  <span class="support-fab-tooltip">پشتیبانی آنلاین</span>
-</button>
-
 </body></html>"""
 
 
