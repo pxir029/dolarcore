@@ -1,5 +1,5 @@
 # ============================================================
-# PXPanel 13.7.0
+# PXPanel 13.8.1
 # Railway Ready
 # ============================================================
 
@@ -42,7 +42,7 @@ from fastapi.middleware.cors import CORSMiddleware
 # ============================================================
 
 APP_NAME = "PXPanel"
-APP_VERSION = "13.7.0"
+APP_VERSION = "13.8.1"
 
 SUPPORT_USERNAME = "@logic_sec"
 SUPPORT_URL = "https://t.me/logic_sec"
@@ -217,11 +217,9 @@ http_client: httpx.AsyncClient | None = None
 
 PROTOCOLS = (
     "vless-ws",
-    "vless-gaming",
     "xhttp-packet-up",
     "xhttp-stream-up",
     "xhttp-stream-one",
-    "mixed-xhttp",
     "vmess-ws",
     "trojan-ws",
     "shadowsocks",
@@ -236,11 +234,9 @@ PROTOCOLS = (
 
 PROTOCOL_LABELS = {
     "vless-ws": "VLESS WebSocket",
-    "vless-gaming": "VLESS Gaming Lite ⚡",
     "xhttp-packet-up": "XHTTP Packet Up",
     "xhttp-stream-up": "XHTTP Stream Up",
     "xhttp-stream-one": "XHTTP Stream One",
-    "mixed-xhttp": "Mixed XHTTP (همه در یک)",
     "vmess-ws": "VMess WebSocket",
     "trojan-ws": "Trojan WebSocket",
     "shadowsocks": "Shadowsocks",
@@ -277,11 +273,9 @@ DEFAULT_FINGERPRINT = "chrome"
 
 DEFAULT_ALPN_BY_PROTOCOL = {
     "vless-ws": "http/1.1",
-    "vless-gaming": "http/1.1",
     "xhttp-packet-up": "h2,http/1.1",
     "xhttp-stream-up": "h2,http/1.1",
     "xhttp-stream-one": "h2,http/1.1",
-    "mixed-xhttp": "h2,http/1.1",
 }
 
 DEFAULT_PORT = 443
@@ -913,6 +907,16 @@ def set_auth_cookie(
 # VLESS LINK GENERATION
 # ============================================================
 
+def _qjoin(params: dict) -> str:
+    """ساخت querystring تمیز بدون فاصله اضافه — برای پینگ و سازگاری کلاینت‌ها"""
+    parts = []
+    for k, v in params.items():
+        if v is None or v == "":
+            continue
+        parts.append(f"{k}={quote(str(v), safe=',/')}")
+    return "&".join(parts)
+
+
 def generate_vless_link(
     uuid: str, host: str, remark: str = "PXPanel",
     protocol: str = DEFAULT_PROTOCOL, fingerprint: str | None = None,
@@ -920,33 +924,14 @@ def generate_vless_link(
 ):
     protocol = normalize_protocol(protocol)
     fp = (fingerprint or DEFAULT_FINGERPRINT).strip().lower()
-    if fp not in FINGERPRINTS: fp = DEFAULT_FINGERPRINT
+    if fp not in FINGERPRINTS:
+        fp = DEFAULT_FINGERPRINT
     port_value = safe_int(port, DEFAULT_PORT, MIN_PORT, MAX_PORT)
     alpn_value = (alpn or DEFAULT_ALPN_BY_PROTOCOL.get(protocol, "http/1.1")).strip()
     label = quote(str(remark or "PXPanel"), safe="")
+    host = str(host or "").strip()
+
     if protocol == "vless-ws":
-        q = {"encryption":"none","security":"tls","type":"ws","host":host,"path":f"/ws/{uuid}","sni":host,"fp":fp,"alpn":alpn_value}
-        return "vless://" + uuid + "@" + host + ":" + str(port_value) + "?" + "&".join(f"{k}={quote(str(v), safe=',/') }" for k,v in q.items()) + "#" + label
-    if protocol.startswith("xhttp-"):
-        mode = protocol.replace("xhttp-", "")
-        q = {"encryption":"none","security":"tls","type":"xhttp","mode":mode,"host":host,"path":f"/xhttp-siz10/{mode}/{uuid}","sni":host,"fp":fp,"alpn":alpn_value}
-        return "vless://" + uuid + "@" + host + ":" + str(port_value) + "?" + "&".join(f"{k}={quote(str(v), safe=',/') }" for k,v in q.items()) + "#" + label
-    if protocol == "vmess-ws":
-        raw = {"v":"2","ps":remark,"add":host,"port":port_value,"id":uuid,"aid":0,"scy":"auto","net":"ws","type":"none","host":host,"path":f"/ws/{uuid}","tls":"tls","sni":host,"fp":fp}
-        return "vmess://" + base64.b64encode(json.dumps(raw,separators=(",",":"),ensure_ascii=False).encode()).decode()
-    if protocol == "trojan-ws":
-        return f"trojan://{uuid}@{host}:{port_value}?security=tls&type=ws&host={quote(host)}&path={quote('/ws/'+uuid)}&sni={quote(host)}#{label}"
-    if protocol == "shadowsocks":
-        method = os.getenv("SS_METHOD", "aes-256-gcm")
-        userinfo = base64.urlsafe_b64encode(f"{method}:{uuid}".encode()).decode().rstrip("=")
-        return f"ss://{userinfo}@{host}:{port_value}#{label}"
-    if protocol == "socks5": return f"socks5://{uuid}:{uuid}@{host}:{port_value}#{label}"
-    if protocol == "http": return f"http://{uuid}:{uuid}@{host}:{port_value}#{label}"
-    if protocol == "hysteria2": return f"hysteria2://{uuid}@{host}:{port_value}/?sni={quote(host)}&insecure=0#{label}"
-    if protocol == "tuic": return f"tuic://{uuid}:{uuid}@{host}:{port_value}?sni={quote(host)}&alpn=h3#{label}"
-    if protocol == "wireguard": return f"wireguard://{uuid}@{host}:{port_value}?publicKey={uuid}#{label}"
-    if protocol == "vless-gaming":
-        # فوق‌العاده سبک مخصوص بازی — حداقل پارامتر، بدون fragment سنگین
         q = {
             "encryption": "none",
             "security": "tls",
@@ -954,30 +939,100 @@ def generate_vless_link(
             "host": host,
             "path": f"/ws/{uuid}",
             "sni": host,
-            "fp": "chrome",
-            "alpn": "http/1.1",
+            "fp": fp,
+            "alpn": alpn_value,
         }
-        return "vless://" + uuid + "@" + host + ":" + str(port_value) + "?" + "&".join(f"{k}={quote(str(v), safe=',/')}" for k, v in q.items()) + "#" + label
-    if protocol == "mixed-xhttp":
-        # یک لینک نماینده — در ساب چند حالت XHTTP برمی‌گردد
+        return f"vless://{uuid}@{host}:{port_value}?{_qjoin(q)}#{label}"
+
+    if protocol.startswith("xhttp-"):
+        mode = protocol.replace("xhttp-", "") or "stream-up"
         q = {
             "encryption": "none",
             "security": "tls",
             "type": "xhttp",
-            "mode": "stream-one",
+            "mode": mode,
             "host": host,
-            "path": f"/xhttp-siz10/stream-one/{uuid}",
+            "path": f"/xhttp-siz10/{mode}/{uuid}",
+            "sni": host,
+            "fp": fp,
+            "alpn": alpn_value or "h2,http/1.1",
+        }
+        return f"vless://{uuid}@{host}:{port_value}?{_qjoin(q)}#{label}"
+
+    if protocol == "vmess-ws":
+        raw = {
+            "v": "2",
+            "ps": remark,
+            "add": host,
+            "port": port_value,
+            "id": uuid,
+            "aid": 0,
+            "scy": "auto",
+            "net": "ws",
+            "type": "none",
+            "host": host,
+            "path": f"/ws/{uuid}",
+            "tls": "tls",
+            "sni": host,
+            "fp": fp,
+        }
+        return "vmess://" + base64.b64encode(
+            json.dumps(raw, separators=(",", ":"), ensure_ascii=False).encode()
+        ).decode()
+
+    if protocol == "trojan-ws":
+        q = {
+            "security": "tls",
+            "type": "ws",
+            "host": host,
+            "path": f"/ws/{uuid}",
+            "sni": host,
+        }
+        return f"trojan://{uuid}@{host}:{port_value}?{_qjoin(q)}#{label}"
+
+    if protocol == "shadowsocks":
+        method = os.getenv("SS_METHOD", "aes-256-gcm")
+        userinfo = base64.urlsafe_b64encode(f"{method}:{uuid}".encode()).decode().rstrip("=")
+        return f"ss://{userinfo}@{host}:{port_value}#{label}"
+
+    if protocol == "socks5":
+        return f"socks5://{uuid}:{uuid}@{host}:{port_value}#{label}"
+    if protocol == "http":
+        return f"http://{uuid}:{uuid}@{host}:{port_value}#{label}"
+    if protocol == "hysteria2":
+        return f"hysteria2://{uuid}@{host}:{port_value}/?sni={quote(host)}&insecure=0#{label}"
+    if protocol == "tuic":
+        return f"tuic://{uuid}:{uuid}@{host}:{port_value}?sni={quote(host)}&alpn=h3#{label}"
+    if protocol == "wireguard":
+        return f"wireguard://{uuid}@{host}:{port_value}?publicKey={uuid}#{label}"
+    if protocol == "highspeed-demo":
+        q = {
+            "encryption": "none",
+            "security": "tls",
+            "type": "xhttp",
+            "mode": "stream-up",
+            "host": host,
+            "path": f"/xhttp-siz10/stream-up/{uuid}",
             "sni": host,
             "fp": fp,
             "alpn": "h2,http/1.1",
         }
-        return "vless://" + uuid + "@" + host + ":" + str(port_value) + "?" + "&".join(f"{k}={quote(str(v), safe=',/')}" for k, v in q.items()) + "#" + label
-    if protocol == "highspeed-demo":
-        q = {"encryption":"none","security":"tls","type":"xhttp","mode":"stream-up","host":host,"path":f"/xhttp-siz10/stream-up/{uuid}","sni":host,"fp":fp,"alpn":"h2,http/1.1"}
-        return "vless://" + uuid + "@" + host + ":" + str(port_value) + "?" + "&".join(f"{k}={quote(str(v), safe=',/')}" for k,v in q.items()) + "#" + label
+        return f"vless://{uuid}@{host}:{port_value}?{_qjoin(q)}#{label}"
     if protocol == "gaming-lite-demo":
         return f"hysteria2://{uuid}@{host}:{port_value}/?sni={quote(host)}&insecure=0&obfs=salamander#{label}"
-    return f"vless://{uuid}@{host}:{port_value}"
+
+    # fallback پایدار: VLESS WS تمیز
+    q = {
+        "encryption": "none",
+        "security": "tls",
+        "type": "ws",
+        "host": host,
+        "path": f"/ws/{uuid}",
+        "sni": host,
+        "fp": fp,
+        "alpn": "http/1.1",
+    }
+    return f"vless://{uuid}@{host}:{port_value}?{_qjoin(q)}#{label}"
 
 def vless_link_for_link(
     link: dict,
@@ -2079,69 +2134,6 @@ h1{
     text-decoration:none;
 }
 
-/* Glassmorphism AI Country Box */
-.ai-glass{
-    margin-top:22px;
-    padding:18px 18px 16px;
-    border-radius:18px;
-    background: linear-gradient(145deg, rgba(255,255,255,.12), rgba(255,255,255,.04));
-    border: 1px solid rgba(255,255,255,.14);
-    backdrop-filter: blur(24px) saturate(180%);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
-    box-shadow: 0 8px 32px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.08);
-}
-.ai-glass-header{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    margin-bottom:14px;
-}
-.ai-icon{
-    width:40px;height:40px;border-radius:12px;
-    background:linear-gradient(135deg,#3b82f6,#8b5cf6);
-    display:flex;align-items:center;justify-content:center;
-    color:#fff;flex-shrink:0;
-    box-shadow:0 4px 16px rgba(59,130,246,.4);
-}
-.ai-title{font-size:13.5px;font-weight:800;color:#fff}
-.ai-sub{font-size:10.5px;color:rgba(255,255,255,.5);margin-top:2px}
-.ai-select-wrap{margin-bottom:10px}
-.ai-select-wrap label{
-    display:block;font-size:10.5px;color:rgba(255,255,255,.55);
-    margin-bottom:6px;font-weight:600;
-}
-.ai-select{
-    width:100%;
-    appearance:none;
-    -webkit-appearance:none;
-    background:rgba(0,0,0,.28);
-    border:1px solid rgba(255,255,255,.12);
-    border-radius:12px;
-    padding:12px 14px;
-    color:#fff;
-    font-family:inherit;
-    font-size:13px;
-    font-weight:600;
-    outline:none;
-    cursor:pointer;
-    transition:.2s;
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2360a5fa'%3E%3Cpath d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-    background-repeat:no-repeat;
-    background-position:left 14px center;
-    padding-left:32px;
-}
-.ai-select:hover,.ai-select:focus{
-    border-color:rgba(96,165,250,.45);
-    background-color:rgba(0,0,0,.38);
-}
-.ai-select option{background:#0f172a;color:#fff}
-.ai-note{
-    font-size:10.5px;
-    color:rgba(255,255,255,.45);
-    line-height:1.6;
-}
-.ai-note strong{color:#86efac}
-
 @media(max-width:600px){
     .card{
         padding:24px;
@@ -2179,7 +2171,7 @@ PX Panel
 </div>
 
 <div class="version">
-13.7.0
+13.8.1
 </div>
 </div>
 
@@ -2187,33 +2179,6 @@ PX Panel
 
 <div class="status">
 ● سیستم آنلاین و فعال است
-</div>
-
-<!-- AI Country Glass Card -->
-<div class="ai-glass">
-  <div class="ai-glass-header">
-    <div class="ai-icon">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 0 1 4 4v1h1a3 3 0 0 1 0 6h-1v1a4 4 0 0 1-8 0v-1H7a3 3 0 0 1 0-6h1V6a4 4 0 0 1 4-4z"/><circle cx="9" cy="10" r="1"/><circle cx="15" cy="10" r="1"/></svg>
-    </div>
-    <div>
-      <div class="ai-title">هوش مصنوعی · انتخاب کشور</div>
-      <div class="ai-sub">برای بهینه‌سازی کانفیگ و مسیر</div>
-    </div>
-  </div>
-  <div class="ai-select-wrap">
-    <label for="ai-country">کشور سرور / مسیر AI</label>
-    <select id="ai-country" class="ai-select">
-      <option value="US" selected>🇺🇸 آمریکا · United States</option>
-      <option value="DE">🇩🇪 آلمان · Germany</option>
-      <option value="NL">🇳🇱 هلند · Netherlands</option>
-      <option value="GB">🇬🇧 انگلیس · United Kingdom</option>
-      <option value="FR">🇫🇷 فرانسه · France</option>
-      <option value="TR">🇹🇷 ترکیه · Turkey</option>
-      <option value="SG">🇸🇬 سنگاپور · Singapore</option>
-      <option value="JP">🇯🇵 ژاپن · Japan</option>
-    </select>
-  </div>
-  <div class="ai-note">پیش‌فرض روی <strong>آمریکا</strong> تنظیم شده — بهترین سازگاری</div>
 </div>
 
 <h1>
@@ -2254,7 +2219,7 @@ class="btn secondary"
 <div class="footer">
 
 <span>
-PX Panel · 13.7.0
+PX Panel · 13.8.1
 </span>
 
 <a
@@ -2524,7 +2489,7 @@ P
 </h1>
 
 <div class="version">
-13.7.0
+13.8.1
 </div>
 
 <div class="desc">
@@ -5200,7 +5165,7 @@ PX Panel
 </h1>
 
 <div class="version">
-13.7.0
+13.8.1
 </div>
 
 <div class="text">
@@ -6195,7 +6160,7 @@ content="width=device-width,initial-scale=1"
 />
 
 <title>
-PX Panel 13.7.0
+PX Panel 13.8.1
 </title>
 
 <link
@@ -7006,7 +6971,7 @@ PX Panel
 <div class="brand-desc">
 داشبورد مدیریت سرویس
 </div>
-<div class="brand-version">13.7.0</div>
+<div class="brand-version">13.8.1</div>
 <div style="margin-top:5px;font-size:10px;display:flex;align-items:center;gap:6px">
 <svg width="14" height="14" viewBox="0 0 24 24" fill="#ff0000"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2 31.5 31.5 0 0 0 0 12a31.5 31.5 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1A31.5 31.5 0 0 0 24 12a31.5 31.5 0 0 0-.5-5.8zM9.75 15.5v-7l6.5 3.5-6.5 3.5z"/></svg>
 <a href="https://www.youtube.com/@LogicSec_YT" target="_blank" rel="noopener" style="color:#93c5fd;text-decoration:none">LogicSec_YT</a>
@@ -7430,8 +7395,7 @@ placeholder="اسم کانفیگ"
   </label>
   <select id="manualProtocol" style="width: 100%; background-color: #1f2937; color: #ffffff; padding: 10px 12px; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px; font-size: 0.875rem; outline: none; cursor: pointer;">
     <option value="vless-ws" style="background-color: #1f2937; color: #ffffff;">VLESS WebSocket</option>
-  <option value="vless-gaming" style="background-color: #1f2937; color: #34d399;">VLESS Gaming Lite ⚡ (سبک بازی)</option>
-    <option value="xhttp-packet-up" style="background-color: #1f2937; color: #ffffff;">XHTTP Packet Up (پیشنهادی)</option>
+<option value="xhttp-packet-up" style="background-color: #1f2937; color: #ffffff;">XHTTP Packet Up (پیشنهادی)</option>
     <option value="xhttp-stream-up" style="background-color: #1f2937; color: #ffffff;">XHTTP Stream Up</option>
     <option value="xhttp-stream-one" style="background-color: #1f2937; color: #ffffff;">XHTTP Stream One</option>
     <option value="vmess-ws" style="background-color: #1f2937; color: #ffffff;">VMess WebSocket</option>
@@ -7726,8 +7690,7 @@ class="modal-backdrop"
 
 <select id="autoProtocol" style="width: 100%; background-color: #1f2937; color: #ffffff; padding: 10px 12px; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 8px; font-size: 0.875rem; outline: none; cursor: pointer;">
   <option value="vless-ws" style="background-color: #1f2937; color: #ffffff;">VLESS WebSocket</option>
-  <option value="vless-gaming" style="background-color: #1f2937; color: #34d399;">VLESS Gaming Lite ⚡ (سبک بازی)</option>
-  <option value="xhttp-packet-up" style="background-color: #1f2937; color: #ffffff;">XHTTP Packet Up</option>
+<option value="xhttp-packet-up" style="background-color: #1f2937; color: #ffffff;">XHTTP Packet Up</option>
   <option value="xhttp-stream-up" style="background-color: #1f2937; color: #ffffff;">XHTTP Stream Up</option>
   <option value="xhttp-stream-one" style="background-color: #1f2937; color: #ffffff;">XHTTP Stream One</option>
   <option value="vmess-ws" style="background-color: #1f2937; color: #ffffff;">VMess WebSocket</option>
@@ -7858,19 +7821,6 @@ line-height:2;
 </div>
 
 
-
-<div style="margin:16px 0 12px;padding:16px;border-radius:16px;background:linear-gradient(145deg,rgba(139,92,246,.18),rgba(59,130,246,.08));border:1px solid rgba(139,92,246,.35);box-shadow:0 8px 24px rgba(0,0,0,.2)">
-  <div style="font-size:13.5px;font-weight:800;color:#e9d5ff;margin-bottom:6px;display:flex;align-items:center;gap:8px">
-    <span style="font-size:18px">◈</span> ساب مخلوط حرفه‌ای
-  </div>
-  <div style="font-size:11px;color:rgba(255,255,255,.55);line-height:1.75;margin-bottom:14px">
-    فقط <b style="color:#c4b5fd">۱ ساب</b> · بدون VLESS · فقط XHTTP مخلوط<br>
-    فقط <b style="color:#fda4af">۱ کانفیگ</b> در مدیریت · وضعیت <b style="color:#fca5a5">غیرفعال</b>
-  </div>
-  <button class="modal-btn primary" onclick="createAutoAll()" style="width:100%;background:linear-gradient(135deg,#7c3aed,#4f46e5);border:none;font-weight:800;padding:12px;border-radius:12px">
-    ساخت ساب مخلوط · ۱ کانفیگ غیرفعال
-  </button>
-</div>
 
 <div class="modal-actions">
 
@@ -8818,31 +8768,6 @@ async function createAuto(){
     await refresh();
 }
 
-async function createAutoAll(){
-    const profile = document.getElementById("autoProfile")?.value || "balanced";
-    closeAutoModal();
-    showToast("در حال ساخت ساب مخلوط (بدون VLESS · ۱ کانفیگ غیرفعال)...");
-    try {
-        const result = await api("/api/links/auto-all", {
-            method:"POST",
-            headers:{"Content-Type":"application/json"},
-            body:JSON.stringify({profile: profile})
-        });
-        if(!result || !result.ok){
-            showToast("خطا در ساخت خودکار");
-            return;
-        }
-        if(result.sub_url){
-            await copyText(result.sub_url);
-            showToast("ساب مخلوط ساخته شد · لینک کپی شد · کانفیگ غیرفعال است ✓");
-        } else {
-            showToast("گروه همه پروتکل‌ها ساخته شد ✓");
-        }
-        await refresh();
-    } catch(e) {
-        showToast("خطا: " + (e.message || e));
-    }
-}
 
 
 async function createManual(){
@@ -9603,9 +9528,43 @@ document.addEventListener("keydown", function(event){
         کاملاً اختیاری هستش عشقا ❤️<br>
         هر سوالی داشتی مستقیم پیام بده
       </div>
+
+      <button type="button" class="support-goftino-btn" onclick="openGoftinoChat()">
+        <span class="sg-icon">💬</span>
+        <span class="sg-text">
+          <span class="sg-title">چت آنلاین پشتیبانی</span>
+          <span class="sg-sub">باز کردن گفت‌وگو · پاسخ سریع</span>
+        </span>
+        <span class="sg-arrow">‹</span>
+      </button>
     </div>
   </div>
 </div>
+
+<style>
+.support-goftino-btn{
+  margin-top:14px;width:100%;
+  display:flex;align-items:center;gap:12px;
+  padding:14px 16px;border:none;cursor:pointer;
+  border-radius:14px;
+  background:linear-gradient(135deg,#0ea5e9,#2563eb);
+  color:#fff;
+  box-shadow:0 8px 24px rgba(14,165,233,.35);
+  transition:all .22s cubic-bezier(.4,0,.2,1);
+  font-family:inherit;text-align:right;
+}
+.support-goftino-btn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 12px 32px rgba(14,165,233,.45);
+  filter:brightness(1.06);
+}
+.support-goftino-btn:active{transform:scale(.98)}
+.sg-icon{font-size:22px;line-height:1}
+.sg-text{flex:1;display:flex;flex-direction:column;gap:2px}
+.sg-title{font-size:13.5px;font-weight:800}
+.sg-sub{font-size:10.5px;opacity:.85}
+.sg-arrow{font-size:18px;opacity:.7}
+</style>
 
 <script>
 function openSupportPanel(){
@@ -9617,6 +9576,38 @@ function closeSupportPanel(){
   if(el){ el.classList.remove('open'); document.body.style.overflow=''; }
 }
 document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeSupportPanel(); });
+
+function openGoftinoChat(){
+  // لود ویجت در صورت نیاز
+  if(!document.getElementById('goftino-script')){
+    var i="Gtx8L4",d=document,g=d.createElement("script"),s="https://www.goftino.com/widget/"+i,l=localStorage.getItem("goftino_"+i);
+    g.id="goftino-script";g.type="text/javascript";g.async=!0;g.src=l?s+"?o="+l:s;
+    d.getElementsByTagName("head")[0].appendChild(g);
+  }
+  // تلاش برای باز کردن ویجت
+  var tries=0;
+  function tryOpen(){
+    tries++;
+    try{
+      if(window.Goftino && typeof window.Goftino.open==="function"){
+        window.Goftino.open();
+        if(typeof showToast==="function") showToast("چت پشتیبانی باز شد");
+        return;
+      }
+    }catch(e){}
+    if(tries<20) setTimeout(tryOpen, 250);
+    else if(typeof showToast==="function") showToast("ویجت در حال بارگذاری...");
+  }
+  setTimeout(tryOpen, 300);
+}
+
+// پیش‌لود سبک اسکریپت برای سرعت بیشتر هنگام کلیک
+(function(){
+  if(document.getElementById('goftino-script')) return;
+  var i="Gtx8L4",d=document,g=d.createElement("script"),s="https://www.goftino.com/widget/"+i,l=localStorage.getItem("goftino_"+i);
+  g.id="goftino-script";g.type="text/javascript";g.async=!0;g.src=l?s+"?o="+l:s;
+  d.getElementsByTagName("head")[0].appendChild(g);
+})();
 </script>
 
 </body>
